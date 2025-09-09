@@ -54,43 +54,90 @@ c = g.GCommand
 cfA = float(cfA)
 cfB = float(cfB)
 
+# デバッグ用関数
+def debug_galil_status():
+    """Galilコントローラの状態を確認する関数"""
+    try:
+        print("=== Galil Status Debug ===")
+        print(f"Connection status: {g.GInfo()}")
+        print(f"Current position A: {c('MG _TPA')}")
+        print(f"Current position B: {c('MG _TPB')}")
+        print(f"Servo status A: {c('MG _SHA')}")
+        print(f"Servo status B: {c('MG _SHB')}")
+        print(f"Busy status A: {c('MG _BGA')}")
+        print(f"Busy status B: {c('MG _BGB')}")
+        print("=========================")
+    except Exception as e:
+        print(f"Debug error: {e}")
+
 # 新しい関数: 10cm移動
 def move(distance):
-    """A軸を10cm（100mm）移動する関数"""
+    """A軸を指定距離（mm）相対移動する関数"""
     try:
-        print("Starting 10cm movement...")
-        logging.info("Starting 10cm movement...")
+        print(f"Starting {distance}mm movement...")
+        logging.info(f"Starting {distance}mm movement...")
+        
+        # デバッグ情報を表示
+        debug_galil_status()
+        
+        # 現在位置を取得
+        current_pos = float(c('MG _TPA'))
+        print(f"Current position: {current_pos * cfA:.2f}mm")
         
         # A軸サーボオン
+        print("Turning on servo A...")
         c('SHA')
+        time.sleep(0.5)  # サーボオン待機
         
-        # 移動量を設定（100mm）
+        # 移動量を設定
         posAMove = distance * (1/cfA)  # Galil内部単位に変換
+        print(f"Calculated move: {posAMove} units")
         
-        # 速度設定
-        c(f'JG-{speedA}')
+        # 速度設定（正の値で設定）
+        print(f"Setting speed: {speedA}")
+        c(f'JG{speedA}')  # 負の符号を削除
         
-        # 目標位置設定
-        c(f'PA{posAMove}')
+        # 絶対位置移動（現在位置 + 移動量）
+        target_pos = current_pos + posAMove
+        print(f"Setting target position: {target_pos}")
+        c(f'PA{target_pos}')
         
-        print(f'Moving A-axis ({distance}mm) to position {posAMove} units')
-        logging.info(f'Moving A-axis ({distance}mm) to position {posAMove} units')
+        print(f'Moving A-axis {distance}mm (relative) - {posAMove} units')
+        logging.info(f'Moving A-axis {distance}mm (relative) - {posAMove} units')
+        
+        # 移動開始前の状態確認
+        print("Checking status before BGA...")
+        print(f"Servo A status: {c('MG _SHA')}")
+        print(f"Busy A status: {c('MG _BGA')}")
         
         # 移動開始
+        print("Executing BGA command...")
         c('BGA')
+        print("BGA command executed successfully!")
         
         # 移動完了まで待機
-        while float(c('MG _BGA')) > 0:
+        timeout = 30  # 30秒タイムアウト
+        elapsed = 0
+        while float(c('MG _BGA')) > 0 and elapsed < timeout:
             time.sleep(0.1)
+            elapsed += 0.1
         
-        print("10cm movement completed!")
-        logging.info("10cm movement completed!")
+        if elapsed >= timeout:
+            print("Movement timeout!")
+            logging.warning("Movement timeout!")
+            return False
+        
+        # 最終位置を取得
+        final_pos = float(c('MG _TPA'))
+        actual_movement = (final_pos - current_pos) * cfA
+        print(f"Movement completed! Actual movement: {actual_movement:.2f}mm")
+        logging.info(f"Movement completed! Actual movement: {actual_movement:.2f}mm")
         
         return True
         
     except Exception as e:
-        print(f"Error in move_10cm: {e}")
-        logging.error(f"Error in move_10cm: {e}")
+        print(f"Error in move: {e}")
+        logging.error(f"Error in move: {e}")
         return False
 
 
