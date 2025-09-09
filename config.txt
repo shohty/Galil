@@ -1,0 +1,8 @@
+IP=192.168.0.10
+port=6349
+logDirectory=C:\Users\magnetometer\Desktop
+galilAddress=192.168.0.101
+cfA=-0.003160749
+cfB=0.018
+speedA=4746
+speedB=1490
