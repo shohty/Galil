@@ -17,7 +17,8 @@ def read_config(file_path):
             config[key] = value
     return config
 
-config = read_config(r'/Users/shohtatakami/github/galil/config.txt')
+#config = read_config(r'/Users/shohtatakami/github/galil/config.txt')# for MAC
+config = read_config(r'C:\Users\magnetometer\desktop\config.txt')# for Windows
 
 # Config values
 IP = config['IP'] 
@@ -70,32 +71,37 @@ def debug_galil_status():
     except Exception as e:
         print(f"Debug error: {e}")
 
-# 新しい関数: 10cm移動
+# 簡易デバッグ関数
+def simple_debug():
+    """シンプルな状態確認"""
+    try:
+        print("=== Simple Debug ===")
+        print(f"Position A: {c('MG _TPA')}")
+        print(f"Busy A: {c('MG _BGA')}")
+        print("===================")
+    except Exception as e:
+        print(f"Simple debug error: {e}")
+
+# 移動関数（元のコードベース）
 def move(distance):
-    """A軸を指定距離（mm）相対移動する関数"""
+    """A軸を指定距離（mm）移動する関数"""
     try:
         print(f"Starting {distance}mm movement...")
         logging.info(f"Starting {distance}mm movement...")
-        
-        # デバッグ情報を表示
-        debug_galil_status()
         
         # 現在位置を取得
         current_pos = float(c('MG _TPA'))
         print(f"Current position: {current_pos * cfA:.2f}mm")
         
         # A軸サーボオン
-        print("Turning on servo A...")
         c('SHA')
-        time.sleep(0.5)  # サーボオン待機
         
         # 移動量を設定
         posAMove = distance * (1/cfA)  # Galil内部単位に変換
         print(f"Calculated move: {posAMove} units")
         
-        # 速度設定（正の値で設定）
-        print(f"Setting speed: {speedA}")
-        c(f'JG{speedA}')  # 負の符号を削除
+        # 速度設定
+        c(f'JG-{speedA}')
         
         # 絶対位置移動（現在位置 + 移動量）
         target_pos = current_pos + posAMove
@@ -113,19 +119,9 @@ def move(distance):
         # 移動開始
         print("Executing BGA command...")
         c('BGA')
-        print("BGA command executed successfully!")
         
-        # 移動完了まで待機
-        timeout = 30  # 30秒タイムアウト
-        elapsed = 0
-        while float(c('MG _BGA')) > 0 and elapsed < timeout:
-            time.sleep(0.1)
-            elapsed += 0.1
-        
-        if elapsed >= timeout:
-            print("Movement timeout!")
-            logging.warning("Movement timeout!")
-            return False
+        # 移動完了まで待機（元のコードと同じ）
+        time.sleep(1)
         
         # 最終位置を取得
         final_pos = float(c('MG _TPA'))
