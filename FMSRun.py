@@ -98,36 +98,25 @@ def move(distance):
         
         # 移動量を設定
         posAMove = distance * (1/cfA)  # Galil内部単位に変換
-        print(f"Calculated move: {posAMove} units")
+        print(f"Moving {distance}mm = {posAMove} units")
         
-        # 速度設定
+        # 速度設定（元のコードと同じ）
         c(f'JG-{speedA}')
         
-        # 絶対位置移動（現在位置 + 移動量）
-        target_pos = current_pos + posAMove
-        print(f"Setting target position: {target_pos}")
-        c(f'PA{target_pos}')
+        # 位置設定（元のコードと同じ）
+        c(f'PA{posAMove}')
         
-        print(f'Moving A-axis {distance}mm (relative) - {posAMove} units')
-        logging.info(f'Moving A-axis {distance}mm (relative) - {posAMove} units')
+        print(f'Moving to {distance} (mm)')
+        logging.info(f'Moving to {distance} (mm)')
+        print(f'Moving to {posAMove} (units)')
+        logging.info(f'Moving to {posAMove} (units)')
         
-        # 移動開始前の状態確認
-        print("Checking status before BGA...")
-        print(f"Servo A status: {c('MG _SHA')}")
-        print(f"Busy A status: {c('MG _BGA')}")
-        
-        # 移動開始
-        print("Executing BGA command...")
+        # 移動開始（元のコードと同じ）
         c('BGA')
+        time.sleep(1)  # 元のコードと同じ待機時間
         
-        # 移動完了まで待機（元のコードと同じ）
-        time.sleep(1)
-        
-        # 最終位置を取得
-        final_pos = float(c('MG _TPA'))
-        actual_movement = (final_pos - current_pos) * cfA
-        print(f"Movement completed! Actual movement: {actual_movement:.2f}mm")
-        logging.info(f"Movement completed! Actual movement: {actual_movement:.2f}mm")
+        print("Movement completed!")
+        logging.info("Movement completed!")
         
         return True
         
